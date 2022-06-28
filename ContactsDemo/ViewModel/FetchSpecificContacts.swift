@@ -1,23 +1,17 @@
 //
-//  ContentView.swift
+//  fetchSpecificContacts.swift
 //  ContactsDemo
 //
-//  Created by Sopnil Sohan on 16/6/22.
+//  Created by Sopnil Sohan on 20/6/22.
 //
 
 import SwiftUI
 import Contacts
 
-struct ContentView: View {
-    var body: some View {
-        Text("Hello, world!")
-            .padding()
-            .onAppear {
-                Task.init {
-                    await fetchAllContacts()
-                }
-            }
-    }
+class FetchSpecificContacts: ObservableObject {
+    
+    @Published var contacts: [ContactModel] = []
+    var contact: ContactModel?
     
     func fetchSpecificContacts() async {
         //Run this in the background async
@@ -37,9 +31,8 @@ struct ContentView: View {
         catch {
             //error
         }
-        
     }
-    
+
     func fetchAllContacts() async {
         //Run this in the background async
         let store = CNContactStore()
@@ -54,28 +47,31 @@ struct ContentView: View {
         do {
             try store.enumerateContacts(with: fetchRequest, usingBlock: { contact, result in
                 //Do something with the block
+                self.contact = ContactModel()
+                self.contact?.name = contact.givenName
                 print (contact.givenName)
+                
                 for number in contact.phoneNumbers {
                     
                     switch number.label {
                     case CNLabelPhoneNumberMobile:
+                        self.contact?.mobile.append(number.value.stringValue)
                         print("- Mobile: \(number.value.stringValue)")
                     case CNLabelPhoneNumberMain:
+                        
+                        self.contact?.main.append(number.value.stringValue)
                         print("- Main: \(number.value.stringValue)")
                     default:
+                        self.contact?.other.append(number.value.stringValue)
                         print("- Other: \(number.value.stringValue)")
                     }
                 }
+                self.contacts.append(self.contact!)
+                print(self.contacts)
             })
         } catch {
             //if there was an error, hendel it here
             print("error")
         }
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }
